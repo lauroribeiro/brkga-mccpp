@@ -13,14 +13,14 @@
 
 class MCCPPDecoder {
 public:
-	MCCPPDecoder(Graph& instance);
+	MCCPPDecoder(const Graph& instance);
 	virtual ~MCCPPDecoder();
 
 	// Decodes a chromosome into a solution to the MCCPP:
 	double decode(const std::vector< double >& chromosome) const;
 
 private:
-	Graph& instance;
+	const Graph& instance;
 };
 
 #endif

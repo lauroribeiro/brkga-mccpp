@@ -7,9 +7,10 @@
 
 #include "MCCPPSolver.h"
 
-MCCPPSolver::MCCPPSolver(Graph& instance, const std::vector< double >& chromosome) :
-		cost(0), vertexOrder(instance.getVerticesCount()), partition(instance.getVerticesCount()) {
-	// Assumes that instance.getNumNodes() == chromosome.size() of course
+MCCPPSolver::MCCPPSolver(const Graph& instance, const std::vector< double >& chromosome) :
+		cost(0.0), vertexOrder(instance.getVerticesCount()), colorAssigned(instance.getVerticesCount(), -1) {
+	// Assumes that instance.getVerticesCount() == chromosome.size()
+
 
 	// 1) Obtain a permutation out of the chromosome -- order the greedy coloring of the vertices:
 	for(unsigned i = 0; i < chromosome.size(); ++i) { vertexOrder[i] = ValueKeyPair(chromosome[i], i); }
@@ -19,30 +20,40 @@ MCCPPSolver::MCCPPSolver(Graph& instance, const std::vector< double >& chromosom
 
 	std::vector<Vertex> vertices = instance.getVertices();
 	std::vector<double> colorCosts = instance.getColorCosts();
+
 	// 2) Assign the colors to the vertices and compute the cost:
-	int color = 0;
-	for(unsigned i = 1; i < vertexOrder.size(); ++i) {
-		if (instance.isColored(vertexOrder[i].second)) { continue; }
+    std::vector<bool> available(vertexOrder.size(), true);
 
-		instance.setColor(vertexOrder[i].second, color);
-		cost += colorCosts[color];
-		for (unsigned j = i + 1; j < vertexOrder.size(); ++j) {
-			if (instance.isColored(vertexOrder[j].second)) { continue; }
+    int color = 0;
+    colorAssigned[vertexOrder[0].second] = color;
+    cost += colorCosts[color];
 
-			if (!instance.isAdjacent(vertexOrder[i].second, vertexOrder[j].second)) {
-				instance.setColor(vertexOrder[j].second, color);
-				cost += colorCosts[color];
-			}
-		}
-		++color;
-	}
+    for(unsigned i = 1; i < vertexOrder.size(); ++i) {
+        // Mark the colors assigned to adjacent vertices as unavailable
+        for (unsigned j = 0; j < i; ++j) {
+            if (instance.isAdjacent(vertexOrder[i].second, vertexOrder[j].second) && colorAssigned[vertexOrder[j].second] != -1) {
+                available[colorAssigned[vertexOrder[j].second]] = false;
+            }
+        }
 
-	partition = instance.getGraphColoring();
+        // Find the first available color
+        color = 0;
+        while (!available[color]) {
+            color++;
+        }
+
+        colorAssigned[vertexOrder[i].second] = color;
+        cost += colorCosts[color];
+
+        // Reset the available colors for the next iteration
+        std::fill(available.begin(), available.end(), true);
+    }
 }
+
 
 MCCPPSolver::~MCCPPSolver() {
 }
 
-double MCCPPSolver::getChromaticPartitionCost() const { return cost; }
+double MCCPPSolver::getChromaticPartitionCost() { return cost; }
 
-std::vector<int> MCCPPSolver::getChromaticPartition() const { return partition; }
+std::vector<int>& MCCPPSolver::getChromaticPartition() { return colorAssigned; }

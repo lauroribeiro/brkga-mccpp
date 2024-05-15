@@ -85,15 +85,18 @@ void Graph::loadFromFile(const std::string& filename) {
     sortColorCosts();
 
     // Ler matriz de adjacência e adicionar arestas ao grafo
-    for (int i = 0; i < V; i++) { // Aprimorar loop para ler apenas a parte superior da matriz, pois é simétrica
+    // std::cout << "Adjacency matrix:\n";
+    for (int i = 0; i < V; i++) {
         vertices[i].index = i;
         vertices[i].color = -1;
-        for (int j = 0; j <= i; j++) {
+        for (int j = 0; j < V; j++) {
             int isConnected;
             file >> isConnected;
+            // std::cout << isConnected << " ";
             if (isConnected)
                 addEdge(i, j);
         }
+        // std::cout << std::endl;
     }
 
     file.close();

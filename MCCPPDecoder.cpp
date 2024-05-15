@@ -7,7 +7,7 @@
 
 #include "MCCPPDecoder.h"
 
-MCCPPDecoder::MCCPPDecoder(Graph& _instance) : instance(_instance) {
+MCCPPDecoder::MCCPPDecoder(const Graph& _instance) : instance(_instance) {
 }
 
 MCCPPDecoder::~MCCPPDecoder() {
