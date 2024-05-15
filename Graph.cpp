@@ -12,15 +12,15 @@
 
 Graph::Graph(int vertices) : V(vertices), adjList(vertices), colorCosts(vertices), vertices(vertices) {}
 
-std::vector<Vertex> Graph::getVertices() {
+std::vector<Vertex> Graph::getVertices() const {
     return vertices;
 }
 
-int Graph::getVerticesCount() {
+int Graph::getVerticesCount() const {
     return V;
 }
 
-std::vector<double> Graph::getColorCosts() {
+std::vector<double> Graph::getColorCosts() const {
     return colorCosts;
 }
 

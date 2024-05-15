@@ -48,11 +48,11 @@ private:
 public:
     Graph(int vertices);
 
-    std::vector<Vertex> getVertices();
+    std::vector<Vertex> getVertices() const;
 
-    int getVerticesCount();
+    int getVerticesCount() const;
 
-    std::vector<double> getColorCosts();
+    std::vector<double> getColorCosts() const;
 
     void addEdge(int src, int dest);
 
