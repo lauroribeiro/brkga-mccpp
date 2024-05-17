@@ -52,6 +52,7 @@ int main(int argc, char* argv[]) {
 			<< " the TSP." << std::endl;
 
 	const clock_t begin = clock();
+	clock_t now = clock();
 
 	const std::string instanceFile = std::string(argv[1]);
 	std::cout << "Instance file: " << instanceFile << std::endl;
@@ -118,8 +119,8 @@ int main(int argc, char* argv[]) {
 	const unsigned MAX_GENS = 1000;	// run for 1000 gens
 
 	// // BRKGA evolution configuration: restart strategy
-	// unsigned relevantGeneration = 1;	// last relevant generation: best updated or reset called
-	// const unsigned RESET_AFTER = 200;
+	unsigned relevantGeneration = 1;	// last relevant generation: best updated or reset called
+	const unsigned RESET_AFTER = 200;
 	std::vector< double > bestChromosome;
 	double bestFitness = std::numeric_limits< double >::max();
 	std::cout << "Best fitness: " << bestFitness << std::endl;
@@ -134,6 +135,8 @@ int main(int argc, char* argv[]) {
 		std::cout << "Running for " << MAX_GENS
 				<< " generations without multi-threading..." << std::endl;
 	#endif
+
+	double games120 = 4351;
 	
 	// Run the evolution loop:
 	unsigned generation = 1;		// current generation
@@ -152,14 +155,14 @@ int main(int argc, char* argv[]) {
 					<< bestFitness << std::endl;
 		}
 
-		// //  Evolution strategy: restart
-		// if(generation - relevantGeneration > RESET_AFTER) {
-		// 	algorithm.reset();	// restart the algorithm with random keys
-		// 	relevantGeneration = generation;
+		//  Evolution strategy: restart
+		if(generation - relevantGeneration > RESET_AFTER) {
+			algorithm.reset();	// restart the algorithm with random keys
+			relevantGeneration = generation;
 			
-		// 	std::cout << "\t" << generation << ") Reset at generation "
-		// 			<< generation << std::endl;
-		// }
+			std::cout << "\t" << generation << ") Reset at generation "
+					<< generation << std::endl;
+		}
 
 		// Evolution strategy: exchange top individuals among the populations
 		// if(generation % X_INTVL == 0 && relevantGeneration != generation) {
@@ -170,8 +173,9 @@ int main(int argc, char* argv[]) {
 		// }
 
 		// Next generation?
+		now = clock();
 		++generation;
-	} while (generation < MAX_GENS);
+	} while (games120 > bestFitness ); //
 
 	// print the fitness of the top 10 individuals of each population:
 	std::cout << "Fitness of the top 10 individuals of each population:" << std::endl;
