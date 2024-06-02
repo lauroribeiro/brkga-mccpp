@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
 	// return 0;
 
 	const unsigned n = instance.getVerticesCount();		// size of chromosomes
-	const unsigned p = 256;		// size of population
+	const unsigned p = 100;		// size of population
 	const double pe = 0.10;		// fraction of population to be the elite-set
 	const double pm = 0.10;		// fraction of population to be replaced by mutants
 	const double rhoe = 0.70;	// probability that offspring inherit an allele from elite parent
@@ -136,7 +136,7 @@ int main(int argc, char* argv[]) {
 				<< " generations without multi-threading..." << std::endl;
 	#endif
 
-	double games120 = 4351;
+	double objectiveValue = 4300;
 	
 	// Run the evolution loop:
 	unsigned generation = 1;		// current generation
@@ -172,10 +172,24 @@ int main(int argc, char* argv[]) {
 		// 			<< ") Exchanged top individuals." << std::endl;
 		// }
 
+		// // 1. Crie uma estrutura de dados para armazenar as transações
+		// std::vector<std::vector<std::pair<int, int>>> transactions;
+
+		// // 2. Preencha as transações com as melhores soluções da população
+		// for (unsigned i = 0; i < bestChromaticPartition.size(); ++i) {
+		// 		std::vector<std::pair<int, int>> transaction;
+		// 		for (unsigned j = 0; j < bound; ++j) {
+		// 				transaction.push_back(std::make_pair(j, bestChromaticPartition[j]));
+		// 		}
+		// 		transactions.push_back(transaction);
+		// }
+
 		// Next generation?
 		now = clock();
 		++generation;
-	} while (games120 > bestFitness ); //
+	} while (generation < MAX_GENS);
+	// } while (bestFitness > objectiveValue);
+	// } while (bestFitness > objectiveValue);
 
 	// print the fitness of the top 10 individuals of each population:
 	std::cout << "Fitness of the top 10 individuals of each population:" << std::endl;
@@ -193,6 +207,8 @@ int main(int argc, char* argv[]) {
 
 	std::cout << "Best solution found has objective value = "
 	 		<< bestSolution.getChromaticPartitionCost() << std::endl;
+	
+	std::cout << "Valid coloring: " << instance.validColoring(bestSolution.getChromaticPartition()) << std::endl;
 
 	const std::vector<int> bestChromaticPartition = bestSolution.getChromaticPartition();
 	std::cout << "Best chromatic partition: [vextex, color]" << std::endl;

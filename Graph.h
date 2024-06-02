@@ -31,24 +31,14 @@ struct Edge {
     int dest;
 };
 
-struct Vertex {
-    int index;
-    int color;
-
-    // Vertex(int idx) : index(idx), color(-1) {} // -1 indica que a cor ainda não foi atribuída
-};
-
 class Graph {
 private:
     int V;
     vector<vector <Edge> > adjList;
     vector<double> colorCosts;
-    vector<Vertex> vertices;
 
 public:
     Graph(int vertices);
-
-    std::vector<Vertex> getVertices() const;
 
     int getVerticesCount() const;
 
@@ -56,17 +46,11 @@ public:
 
     void addEdge(int src, int dest);
 
-    void setColor(int vertexIndex, int color);
-
-    int getColor(int vertexIndex) const;
-
-    bool isColored(int vertexIndex) const;
-
     bool isAdjacent(int vertexIndex1, int vertexIndex2) const;
 
-    vector<int> getGraphColoring() const;
-
     void sortColorCosts();
+
+    bool validColoring(vector<int> colorAssigned) const;
 
     void loadFromFile(const string& filename);
 };
