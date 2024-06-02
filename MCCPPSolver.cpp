@@ -18,7 +18,6 @@ MCCPPSolver::MCCPPSolver(const Graph& instance, const std::vector< double >& chr
 	// Here we sort 'rank', which will produce a permutation of [n] stored in ValueKeyPair::second:
 	std::sort(vertexOrder.begin(), vertexOrder.end());
 
-	std::vector<Vertex> vertices = instance.getVertices();
 	std::vector<double> colorCosts = instance.getColorCosts();
 
 	// 2) Assign the colors to the vertices and compute the cost:
