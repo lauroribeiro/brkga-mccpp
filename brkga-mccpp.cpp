@@ -48,82 +48,57 @@
 int main(int argc, char* argv[]) {
 	if(argc < 2) { std::cerr << "usage: <TSPLIB-file>" << std::endl; return -1; }
 
-	std::cout << "Welcome to the BRKGA API sample driver.\nFinding a (heuristic) minimizer for "
-			<< " the TSP." << std::endl;
+	// std::cout << "Welcome to the BRKGA API sample driver.\nFinding a (heuristic) minimizer for "
+			// << " the TSP." << std::endl;
 
 	const clock_t begin = clock();
 	clock_t now = clock();
 
 	const std::string instanceFile = std::string(argv[1]);
-	std::cout << "Instance file: " << instanceFile << std::endl;
+	// std::cout << "Instance file: " << instanceFile << std::endl;
 
    	Graph instance(1); // Inicialização temporária
 
 	// Read the instance:
     instance.loadFromFile(instanceFile);
 
-	// bool adj = instance.isAdjacent(1, 10);
-	// std::cout << "Is adjacent 1, 10: " << adj << std::endl;
-	// adj = instance.isAdjacent(3, 10);
-	// std::cout << "Is adjacent 3, 10: " << adj << std::endl;
-	// return 0;
-
-
-	// double arr[] = {0.1, 0.4, 0.2, 0.3, 0.5, 0.6, 0.7, 0.8, 0.9, 0.14, 0.04};
-	// std::vector<double> chromossome(arr, arr + sizeof(arr) / sizeof(arr[0]));
-
-	// MCCPPSolver solution(instance, chromossome);
-
-
-	// std::cout << "Solution cost: " << solution.getChromaticPartitionCost() << std::endl;
-	// std::vector<int> colorAssigned = solution.getChromaticPartition();
-	// for (unsigned i = 0; i < colorAssigned.size(); ++i) {
-	// 	std::cout << " [" << i << ", " << colorAssigned[i] << "]";
-	// }
-	
-	// return 0;
 
 	const unsigned n = instance.getVerticesCount();		// size of chromosomes
-	const unsigned p = 100;		// size of population
-	const double pe = 0.10;		// fraction of population to be the elite-set
-	const double pm = 0.10;		// fraction of population to be replaced by mutants
-	const double rhoe = 0.70;	// probability that offspring inherit an allele from elite parent
+	const unsigned p = atoi(argv[2]);		// size of population
+	// const unsigned p = 200;		// size of population
+	const double pe = atof(argv[3]);		// fraction of population to be the elite-set
+	// const double pe = 0.25;		// fraction of population to be the elite-set
+	const double pm = atof(argv[4]);		// fraction of population to be replaced by mutants
+	// const double pm = 0.10;		// fraction of population to be replaced by mutants
+	const double rhoe = atof(argv[5]);	// probability that offspring inherit an allele from elite parent
+	// const double rhoe = 0.70;	// probability that offspring inherit an allele from elite parent
 	const unsigned K = 1;		// number of independent populations
 	const unsigned MAXT = 1;	// number of threads for parallel decoding
-
+	
 	MCCPPDecoder decoder(instance);
-	const long unsigned rngSeed = time(0);	// seed to the random number generator
+
+	const int seed = atoi(argv[8]);	// seed for random number generator
+	const double stopTime = atof(argv[9]);	// stop time in seconds
+	// const double objectiveValue = atof(argv[10]);	// objective value to stop the algorithm
+	const time_t rngSeed = seed;	// seed to the random number generator
 	MTRand rng(rngSeed);					// initialize the random number generator
 
 	// initialize the BRKGA-based heuristic
 	BRKGA< MCCPPDecoder, MTRand > algorithm(n, p, pe, pm, rhoe, decoder, rng, K, MAXT);
-
-	// for (int i = 0; i < instance.getVerticesCount(); i++) {
-	// 	instance.setColor(i, i);
-	// }
-	// std::vector<double> colorCosts = instance.getColorCosts();
-	// std::vector<int> coloring = instance.getGraphColoring();
-	// std::vector<Vertex> vertices = instance.getVertices();
-	// std::string colored = instance.isColored(2) ? "true" : "false";
-	// std::cout << "\niscolored 2 " << colored;
-	// for (int i = 0; i < instance.getVerticesCount(); i++) {
-	// 	std::cout << "\n Vertex[" << vertices[i].index << 
-	// 	 			 "] color: " << vertices[i].color << 
-	// 				 " color cost: " << colorCosts[vertices[i].color];
-	// }
-	
 	
 	// // BRKGA inner loop (evolution) configuration: Exchange top individuals
 	// const unsigned X_INTVL = 100;	// exchange best individuals at every 100 generations
 	// const unsigned X_NUMBER = 2;	// exchange top 2 best
-	const unsigned MAX_GENS = 1000;	// run for 1000 gens
+	const unsigned MAX_GENS = 200;	// run for 1000 gens
 
-	// // BRKGA evolution configuration: restart strategy
+	// BRKGA evolution configuration: restart strategy
+	const int restartStrategy = atoi(argv[7]);	// 0: no restart, 1: restart with consequent generations, 2: restart without improvements
 	unsigned relevantGeneration = 1;	// last relevant generation: best updated or reset called
-	const unsigned RESET_AFTER = 200;
+	unsigned generationCounter = 1;	// generation counter for the restart strategy
+	const unsigned RESET_AFTER = atoi(argv[6]);
 	std::vector< double > bestChromosome;
 	double bestFitness = std::numeric_limits< double >::max();
-	std::cout << "Best fitness: " << bestFitness << std::endl;
+	// std::cout << "Best fitness: " << bestFitness << std::endl;
 
 	// Print info about multi-threading:
 	#ifdef _OPENMP
@@ -132,11 +107,11 @@ int main(int argc, char* argv[]) {
 				<< " available thread units..." << std::endl;
 	#endif
 	#ifndef _OPENMP
-		std::cout << "Running for " << MAX_GENS
-				<< " generations without multi-threading..." << std::endl;
+		// std::cout << "Running for " << MAX_GENS
+		// 		<< " generations without multi-threading..." << std::endl;
 	#endif
 
-	double objectiveValue = 4300;
+	// double objectiveValue = 4300;
 	
 	// Run the evolution loop:
 	unsigned generation = 1;		// current generation
@@ -150,18 +125,34 @@ int main(int argc, char* argv[]) {
 			bestFitness = algorithm.getBestFitness();
 			bestChromosome = algorithm.getBestChromosome();
 			
-			std::cout << "\t" << generation
-					<< ") Improved best solution thus far: "
-					<< bestFitness << std::endl;
+			// std::cout << "\t" << generation
+			// 		<< ") Improved best solution thus far: "
+			// 		<< bestFitness << std::endl;
 		}
 
 		//  Evolution strategy: restart
-		if(generation - relevantGeneration > RESET_AFTER) {
-			algorithm.reset();	// restart the algorithm with random keys
-			relevantGeneration = generation;
-			
-			std::cout << "\t" << generation << ") Reset at generation "
-					<< generation << std::endl;
+		switch (restartStrategy) {
+			case 1:	// restart with consequent generations
+				if(generation - relevantGeneration > RESET_AFTER) {
+					algorithm.reset();	// restart the algorithm with random keys
+					relevantGeneration = generation;
+					
+					// std::cout << "\t" << generation << ") Reset at generation "
+					// 		<< generation << std::endl;
+				}
+				break;
+			case 2:	// restart without improvements
+				if(generationCounter > RESET_AFTER) {
+					generationCounter = 1;
+					algorithm.reset();	// restart the algorithm with random keys
+					relevantGeneration = generation;
+					
+					// // std::cout << "\t" << generation << ") Reset at generation "
+					// 		<< generation << std::endl;
+				}
+				generationCounter++;
+				break;
+			default: break;
 		}
 
 		// Evolution strategy: exchange top individuals among the populations
@@ -187,38 +178,41 @@ int main(int argc, char* argv[]) {
 		// Next generation?
 		now = clock();
 		++generation;
-	} while (generation < MAX_GENS);
-	// } while (bestFitness > objectiveValue);
+	// } while (generation < MAX_GENS);
+	} while ((now - begin) / double(CLOCKS_PER_SEC) < stopTime);
+	// } while ((bestFitness > objectiveValue) && ((now - begin) / double(CLOCKS_PER_SEC) < stopTime));
 	// } while (bestFitness > objectiveValue);
 
 	// print the fitness of the top 10 individuals of each population:
-	std::cout << "Fitness of the top 10 individuals of each population:" << std::endl;
-	const unsigned bound = std::min(p, unsigned(10));	// makes sure we have 10 individuals
-	for(unsigned i = 0; i < K; ++i) {
-		std::cout << "Population #" << i << ":" << std::endl;
-		for(unsigned j = 0; j < bound; ++j) {
-			std::cout << "\t" << j << ") "
-					<< algorithm.getPopulation(i).getFitness(j) << std::endl;
-		}
-	}
+	// std::cout << "Fitness of the top 10 individuals of each population:" << std::endl;
+	// const unsigned bound = std::min(p, unsigned(10));	// makes sure we have 10 individuals
+	// for(unsigned i = 0; i < K; ++i) {
+	// 	std::cout << "Population #" << i << ":" << std::endl;
+	// 	for(unsigned j = 0; j < bound; ++j) {
+	// 		std::cout << "\t" << j << ") "
+	// 				<< algorithm.getPopulation(i).getFitness(j) << std::endl;
+	// 	}
+	// }
 
 	// rebuild the best solution:
 	MCCPPSolver bestSolution(instance, bestChromosome);
 
-	std::cout << "Best solution found has objective value = "
-	 		<< bestSolution.getChromaticPartitionCost() << std::endl;
+	// std::cout << "Best solution found has objective value = "
+	//  		<< bestSolution.getChromaticPartitionCost() << std::endl;
 	
-	std::cout << "Valid coloring: " << instance.validColoring(bestSolution.getChromaticPartition()) << std::endl;
+	// std::cout << "Valid coloring: " << instance.validColoring(bestSolution.getChromaticPartition()) << std::endl;
 
-	const std::vector<int> bestChromaticPartition = bestSolution.getChromaticPartition();
-	std::cout << "Best chromatic partition: [vextex, color]" << std::endl;
-	for (unsigned i = 0; i < bestChromaticPartition.size(); ++i) {
-		std::cout << " [" << i << ", " << bestChromaticPartition[i] << "]";
-	}
-	std::cout << std::endl;
+	// const std::vector<int> bestChromaticPartition = bestSolution.getChromaticPartition();
+	// std::cout << "Best chromatic partition: [vextex, color]" << std::endl;
+	// for (unsigned i = 0; i < bestChromaticPartition.size(); ++i) {
+	// 	std::cout << " [" << i << ", " << bestChromaticPartition[i] << "]";
+	// }
+	// std::cout << std::endl;
 
 	const clock_t end = clock();
-	std::cout << "BRKGA run finished in " << (end - begin) / double(CLOCKS_PER_SEC) << " s." << std::endl;
+	// std::cout << bestFitness << " - " << (end - begin) / double(CLOCKS_PER_SEC) << std::endl;
+	std::cout << bestFitness << "," << (end - begin) / double(CLOCKS_PER_SEC);
+	// std::cout << "BRKGA run finished in " << (end - begin) / double(CLOCKS_PER_SEC) << " s." << std::endl;
 
 	return 0;
 }

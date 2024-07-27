@@ -41,7 +41,7 @@ void Graph::sortColorCosts() {
 
 bool Graph::validColoring(vector<int> colorAssigned) const {
     for (int i = 0; i < V; i++) {
-        for (int j = 0; j < adjList[i].size(); j++) {
+        for (size_t j = 0; j < adjList[i].size(); j++) {
             if (colorAssigned[i] == colorAssigned[adjList[i][j].dest]) {
                 return false;
             }
