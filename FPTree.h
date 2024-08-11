@@ -107,4 +107,52 @@ void findFrequentPatterns(FPTree& tree, int minSupport, vector<VertexColor> pref
     }
 }
 
+void findMaximalPatterns(FPTree& tree, int minSupport, vector<VertexColor> prefix, vector<vector<VertexColor>>& maximalPatterns) {
+    bool isMaximal = true;
+
+    for (auto& entry : tree.headerTable) {
+        VertexColor item = entry.first;
+        int support = 0;
+        for (FPNode* node : entry.second) {
+            support += node->count;
+        }
+
+        if (support >= minSupport) {
+            isMaximal = false;
+
+            vector<VertexColor> newPrefix = prefix;
+            newPrefix.push_back(item);
+
+            vector<vector<VertexColor>> conditionalPatterns;
+            for (FPNode* node : entry.second) {
+                int count = node->count;
+                vector<VertexColor> path;
+                FPNode* parent = node->parent;
+                while (parent->item.first != -1) {
+                    path.push_back(parent->item);
+                    parent = parent->parent;
+                }
+                for (int i = 0; i < count; ++i) {
+                    conditionalPatterns.push_back(path);
+                }
+            }
+
+            FPTree conditionalTree;
+            for (auto& pattern : conditionalPatterns) {
+                reverse(pattern.begin(), pattern.end());
+                conditionalTree.addTransaction(pattern);
+            }
+
+            findMaximalPatterns(conditionalTree, minSupport, newPrefix, maximalPatterns);
+        }
+    }
+
+    if (isMaximal && !prefix.empty()) {
+        maximalPatterns.push_back(prefix);
+    }
+}
+
+
+
+
 #endif // FPTREE_H
