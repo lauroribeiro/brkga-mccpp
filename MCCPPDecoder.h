@@ -17,7 +17,9 @@ public:
 	virtual ~MCCPPDecoder();
 
 	// Decodes a chromosome into a solution to the MCCPP:
-	double decode(const std::vector< double >& chromosome) const;
+	double decode(const std::vector< double >& chromosome, const std::vector<std::vector<std::pair<int, int> > > minedPatterns = std::vector<std::vector<std::pair<int, int> > >()) const;
+	
+	double calculatePatternBonus(const std::vector<int> colorAssigned, const std::vector<std::vector<std::pair<int, int> > > minedPatterns) const;
 
 private:
 	const Graph& instance;

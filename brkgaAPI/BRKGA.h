@@ -115,7 +115,7 @@ public:
 	 * @param J interval to exchange elite chromosomes (must be even; 0 ==> no synchronization)
 	 * @param M number of elite chromosomes to select from each population in order to exchange
 	 */
-	void evolve(unsigned generations = 1);
+	void evolve(unsigned generations = 1, const std::vector<std::vector<std::pair<int, int> > > minedPatterns = std::vector<std::vector<std::pair<int, int> > >());
 
 	/**
 	 * Exchange elite-solutions between the populations
@@ -171,7 +171,7 @@ private:
 
 	// Local operations:
 	void initialize(const unsigned i);		// initialize current population 'i' with random keys
-	void evolution(Population& curr, Population& next);
+	void evolution(Population& curr, Population& next, const std::vector<std::vector<std::pair<int, int> > > minedPatterns);	// evolve current population
 	bool isRepeated(const std::vector< double >& chrA, const std::vector< double >& chrB) const;
 };
 
@@ -242,14 +242,14 @@ void BRKGA< Decoder, RNG >::reset() {
 }
 
 template< class Decoder, class RNG >
-void BRKGA< Decoder, RNG >::evolve(unsigned generations) {
+void BRKGA< Decoder, RNG >::evolve(unsigned generations, const std::vector<std::vector<std::pair<int, int> > > minedPatterns) {
 	#ifdef RANGECHECK
 		if(generations == 0) { throw std::range_error("Cannot evolve for 0 generations."); }
 	#endif
 
 	for(unsigned i = 0; i < generations; ++i) {
 		for(unsigned j = 0; j < K; ++j) {
-			evolution(*current[j], *previous[j]);	// First evolve the population (curr, next)
+			evolution(*current[j], *previous[j], minedPatterns); // First evolve the population (curr, next)
 			std::swap(current[j], previous[j]);		// Update (prev = curr; curr = prev == next)
 		}
 	}
@@ -303,7 +303,7 @@ inline void BRKGA< Decoder, RNG >::initialize(const unsigned i) {
 }
 
 template< class Decoder, class RNG >
-inline void BRKGA< Decoder, RNG >::evolution(Population& curr, Population& next) {
+inline void BRKGA< Decoder, RNG >::evolution(Population& curr, Population& next, const std::vector<std::vector<std::pair<int, int> > > minedPatterns) {
 	// We now will set every chromosome of 'current', iterating with 'i':
 	unsigned i = 0;	// Iterate chromosome by chromosome
 	unsigned j = 0;	// Iterate allele by allele
@@ -346,7 +346,7 @@ inline void BRKGA< Decoder, RNG >::evolution(Population& curr, Population& next)
 		#pragma omp parallel for num_threads(MAX_THREADS)
 	#endif
 	for(int i = int(pe); i < int(p); ++i) {
-		next.setFitness( i, refDecoder.decode(next.population[i]) );
+		next.setFitness( i, refDecoder.decode(next.population[i], minedPatterns) );
 	}
 
 	// Now we must sort 'current' by fitness, since things might have changed:

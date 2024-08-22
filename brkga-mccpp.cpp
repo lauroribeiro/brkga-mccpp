@@ -44,6 +44,65 @@
 #include "Graph.h"
 #include "MCCPPSolver.h"
 #include "MCCPPDecoder.h"
+#include "FPTree.h"
+
+std::vector<std::vector<VertexColor>> findPatterns(const std::vector<std::vector<int>>& elitePopulation, int population_size) {
+	// 1. Crie uma estrutura de dados para armazenar as transações
+	std::vector<std::vector<VertexColor>> transactions;
+
+	for(unsigned i = 0; i < elitePopulation.size(); ++i) {
+		std::vector<VertexColor> transaction;
+		for(unsigned j = 0; j < elitePopulation[i].size(); ++j) {
+			transaction.push_back(std::make_pair(j, elitePopulation[i][j]));
+		}
+		transactions.push_back(transaction);
+	}
+
+	map<VertexColor, int> itemFrequency;
+	for (const auto& transaction : transactions) {
+		for (const VertexColor& item : transaction) {
+				itemFrequency[item]++;
+		}
+	}
+
+	vector<vector<VertexColor>> sortedTransactions;
+	for (auto& transaction : transactions) {
+			vector<VertexColor> sortedTransaction = transaction;
+			sort(sortedTransaction.begin(), sortedTransaction.end(), [&itemFrequency](const VertexColor& a, const VertexColor& b) {
+					return itemFrequency[a] > itemFrequency[b];
+			});
+			sortedTransactions.push_back(sortedTransaction);
+	}
+
+	FPTree tree;
+	for (const auto& transaction : sortedTransactions) {
+			tree.addTransaction(transaction);
+	}
+
+	int minSupport = population_size * 0.7;
+	vector<pair<vector<VertexColor>, int>> patterns;
+	// findFrequentPatterns(tree, minSupport, vector<VertexColor>(), patterns);
+	findMaximalPatterns(tree, minSupport, vector<VertexColor>(), patterns);
+
+	//
+	// cout << "Frequent Patterns size:" << patterns.size() << endl;
+	// int count = 0;
+	// for (const auto& pattern : patterns) {
+	// 	// if(pattern.size() < 4) { continue; }
+	// 	if(count > 50) { break; }
+	// 	for (const VertexColor& item : pattern.first) {
+	// 			cout << "(" << item.first << ", " << item.second << ") ";
+	// 	}
+	// 	cout << " - " << pattern.second << endl;
+	// 	cout << endl;
+	// 	count++;
+	// }
+	std::vector<std::vector<VertexColor>> minedPatterns;
+	for (const auto& pattern : patterns) {
+		minedPatterns.push_back(pattern.first);
+	}
+	return minedPatterns;
+}
 
 int main(int argc, char* argv[]) {
 	if(argc < 2) { std::cerr << "usage: <TSPLIB-file>" << std::endl; return -1; }
@@ -113,10 +172,12 @@ int main(int argc, char* argv[]) {
 
 	// double objectiveValue = 4300;
 	
+	std::vector<std::vector<VertexColor>> minedPatterns;
 	// Run the evolution loop:
 	unsigned generation = 1;		// current generation
+	bool alreadyMined = false;
 	do {
-		algorithm.evolve();	// evolve the population for one generation
+		algorithm.evolve(1, minedPatterns);	// evolve the population for one generation
 
 		// Bookeeping: has the best solution thus far improved?
 		if(algorithm.getBestFitness() < bestFitness) {
@@ -128,6 +189,31 @@ int main(int argc, char* argv[]) {
 			// std::cout << "\t" << generation
 			// 		<< ") Improved best solution thus far: "
 			// 		<< bestFitness << std::endl;
+		}
+
+		// if((now - begin) / double(CLOCKS_PER_SEC) < (stopTime / 2) && minedPatterns.size() == 0) {
+		if((generation < (MAX_GENS / 2)) && !alreadyMined) {
+			alreadyMined = true;
+			// find patterns given the elite group
+			std::cout << "Elite chromatic partition: [vextex, color]" << std::endl;
+			// vextex to store elites
+			std::vector<std::vector<int>> elitePopulation;
+			
+			for(unsigned i = 0; i < p; ++i) {
+				MCCPPSolver eliteSolution(instance, algorithm.getPopulation(0).getChromosome(i));
+				const std::vector<int> eliteChromaticPartition = eliteSolution.getChromaticPartition();
+				elitePopulation.push_back(eliteChromaticPartition);
+				// for(unsigned j = 0; j < eliteChromaticPartition.size(); ++j) {
+				// 	std::cout << " [" << j << ", " << eliteChromaticPartition[j] << "]";
+				// }
+			}
+			minedPatterns = findPatterns(elitePopulation, p);
+			for (const auto& pattern : minedPatterns) {
+				for (const VertexColor& item : pattern) {
+						std::cout << "(" << item.first << ", " << item.second << ") ";
+				}
+				std::cout << std::endl;
+			}
 		}
 
 		//  Evolution strategy: restart
@@ -178,8 +264,8 @@ int main(int argc, char* argv[]) {
 		// Next generation?
 		now = clock();
 		++generation;
-	// } while (generation < MAX_GENS);
-	} while ((now - begin) / double(CLOCKS_PER_SEC) < stopTime);
+	} while (generation < MAX_GENS);
+	// } while ((now - begin) / double(CLOCKS_PER_SEC) < stopTime);
 	// } while ((bestFitness > objectiveValue) && ((now - begin) / double(CLOCKS_PER_SEC) < stopTime));
 	// } while (bestFitness > objectiveValue);
 
@@ -211,7 +297,7 @@ int main(int argc, char* argv[]) {
 
 	const clock_t end = clock();
 	// std::cout << bestFitness << " - " << (end - begin) / double(CLOCKS_PER_SEC) << std::endl;
-	std::cout << bestFitness << "," << (end - begin) / double(CLOCKS_PER_SEC);
+	std::cout << bestSolution.getChromaticPartitionCost() << "," << (end - begin) / double(CLOCKS_PER_SEC);
 	// std::cout << "BRKGA run finished in " << (end - begin) / double(CLOCKS_PER_SEC) << " s." << std::endl;
 
 	return 0;

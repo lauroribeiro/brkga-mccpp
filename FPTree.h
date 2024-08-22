@@ -107,8 +107,8 @@ void findFrequentPatterns(FPTree& tree, int minSupport, vector<VertexColor> pref
     }
 }
 
-void findMaximalPatterns(FPTree& tree, int minSupport, vector<VertexColor> prefix, vector<vector<VertexColor>>& maximalPatterns) {
-    bool isMaximal = true;
+void findMaximalPatterns(FPTree& tree, int minSupport, vector<VertexColor> prefix, vector<pair<vector<VertexColor>, int>>& patterns) {
+    size_t maxPatterns = 10;
 
     for (auto& entry : tree.headerTable) {
         VertexColor item = entry.first;
@@ -118,8 +118,6 @@ void findMaximalPatterns(FPTree& tree, int minSupport, vector<VertexColor> prefi
         }
 
         if (support >= minSupport) {
-            isMaximal = false;
-
             vector<VertexColor> newPrefix = prefix;
             newPrefix.push_back(item);
 
@@ -143,16 +141,41 @@ void findMaximalPatterns(FPTree& tree, int minSupport, vector<VertexColor> prefi
                 conditionalTree.addTransaction(pattern);
             }
 
-            findMaximalPatterns(conditionalTree, minSupport, newPrefix, maximalPatterns);
+            vector<pair<vector<VertexColor>, int>> subPatterns;
+            findMaximalPatterns(conditionalTree, minSupport, newPrefix, subPatterns);
+
+            if (subPatterns.empty()) {
+                patterns.push_back({newPrefix, support});
+            } else {
+                bool isMaximal = true;
+                for (auto& subPattern : subPatterns) {
+                    if (includes(subPattern.first.begin(), subPattern.first.end(), newPrefix.begin(), newPrefix.end())) {
+                        isMaximal = false;
+                        break;
+                    }
+                }
+                if (isMaximal) {
+                    patterns.push_back({newPrefix, support});
+                }
+            }
+
+            patterns.insert(patterns.end(), subPatterns.begin(), subPatterns.end());
+
+            // Mantém apenas os maiores padrões quando o limite é excedido
+            if (patterns.size() > maxPatterns) {
+                // sort(patterns.begin(), patterns.end(), [](const pair<vector<VertexColor>, int>& a, const pair<vector<VertexColor>, int>& b) {
+                //     return a.second > b.second;
+                // });
+                patterns.resize(maxPatterns);
+                break;
+            }
         }
     }
 
-    if (isMaximal && !prefix.empty()) {
-        maximalPatterns.push_back(prefix);
-    }
+    // Ordena os padrões maximais por suporte de forma decrescente
+    sort(patterns.begin(), patterns.end(), [](const pair<vector<VertexColor>, int>& a, const pair<vector<VertexColor>, int>& b) {
+        return a.second > b.second;
+    });
 }
-
-
-
 
 #endif // FPTREE_H
